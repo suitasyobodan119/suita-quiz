@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>救急救命スピードクイズ</title>
+<style>
+  :root{
+    --paper:#FFF7F5;
+    --surface:#FFFFFF;
+    --surface-2:#FDEEEA;
+    --ink:#1C1512;
+    --ink-2:#6B5750;
+    --ink-3:#98827A;
+    --line:#EFDCD6;
+    --line-2:#E0C8C1;
+    --fire:#D0281A;
+    --fire-deep:#9A1A10;
+    --fire-soft:#FBE4E0;
+    --ok:#12764A;
+    --ok-soft:#DFF2E7;
+    --warn-bg:#FFF6E0;
+    --warn-line:#E0A100;
+    --warn-ink:#6B5000;
+    --shadow:0 1px 2px rgba(60,20,12,.06), 0 8px 24px -12px rgba(60,20,12,.22);
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic Medium","Yu Gothic",Meiryo,system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#16100E;
+      --surface:#211917;
+      --surface-2:#2C201D;
+      --ink:#F6EBE7;
+      --ink-2:#C0A79F;
+      --ink-3:#95807A;
+      --line:#372826;
+      --line-2:#4A3531;
+      --fire:#FF6E58;
+      --fire-deep:#FF8F7D;
+      --fire-soft:#3A1B16;
+      --ok:#5FD39B;
+      --ok-soft:#12301F;
+      --warn-bg:#2E2411;
+      --warn-line:#B98500;
+      --warn-ink:#E8CE8A;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#16100E;
+    --surface:#211917;
+    --surface-2:#2C201D;
+    --ink:#F6EBE7;
+    --ink-2:#C0A79F;
+    --ink-3:#95807A;
+    --line:#372826;
+    --line-2:#4A3531;
+    --fire:#FF6E58;
+    --fire-deep:#FF8F7D;
+    --fire-soft:#3A1B16;
+    --ok:#5FD39B;
+    --ok-soft:#12301F;
+    --warn-bg:#2E2411;
+    --warn-line:#B98500;
+    --warn-ink:#E8CE8A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--jp); font-size:16px; line-height:1.65;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{width:100%; max-width:560px; margin:0 auto; padding-inline:18px; padding-block:22px 40px;}
+
+  ruby{ruby-align:center}
+  rt{font-size:.55em; color:var(--ink-3); font-weight:400}
+
+  /* ---------- start ---------- */
+  .eyebrow{
+    font-size:12px; font-weight:700; letter-spacing:.14em;
+    color:var(--fire); margin:0 0 10px;
+  }
+  h1{
+    margin:0; font-size:clamp(28px,8.5vw,40px); line-height:1.22;
+    font-weight:900; letter-spacing:.01em; text-wrap:balance; color:var(--ink);
+  }
+  h1 .accent{color:var(--fire)}
+  .lede{margin:14px 0 0; color:var(--ink-2); font-size:15px}
+
+  .facts{
+    display:flex; gap:0; margin:22px 0 0; padding:0; list-style:none;
+    border:1px solid var(--line); border-radius:14px; background:var(--surface);
+    overflow:hidden; box-shadow:var(--shadow);
+  }
+  .facts li{flex:1 1 0; padding:12px 6px; text-align:center; border-left:1px solid var(--line)}
+  .facts li:first-child{border-left:0}
+  .facts b{display:block; font-family:var(--mono); font-size:20px; font-weight:700; color:var(--fire); font-variant-numeric:tabular-nums}
+  .facts span{display:block; font-size:11px; color:var(--ink-3); letter-spacing:.06em; margin-top:2px}
+
+  .btn{
+    display:block; width:100%; border:0; border-radius:999px; cursor:pointer;
+    font-family:inherit; font-weight:800; color:#fff; background:var(--fire);
+    padding:18px 20px; font-size:19px; letter-spacing:.04em;
+    box-shadow:0 6px 0 var(--fire-deep); transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--fire-deep)}
+  .btn.secondary{background:var(--surface); color:var(--ink-2); border:1px solid var(--line-2); box-shadow:none; font-size:15px; padding:13px 18px; font-weight:700}
+  .btn.share{background:var(--ok); box-shadow:0 6px 0 color-mix(in srgb, var(--ok) 70%, #000)}
+  .btn-row{display:grid; gap:10px; margin-top:22px}
+
+  :focus-visible{outline:3px solid var(--fire); outline-offset:3px; border-radius:6px}
+
+  /* ---------- quiz ---------- */
+  .hud{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+  .counter{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink-3); letter-spacing:.08em}
+  .clock{font-family:var(--mono); font-size:30px; font-weight:700; color:var(--fire); font-variant-numeric:tabular-nums; line-height:1}
+  .clock.low{color:var(--fire-deep)}
+  .clock.stopped,.meter.stopped{opacity:.3}
+  .clock small{font-size:13px; font-weight:400; color:var(--ink-3); margin-left:3px}
+
+  .meter{height:6px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:10px}
+  .meter i{display:block; height:100%; width:100%; background:var(--fire); border-radius:99px; transform-origin:left center}
+
+  .pips{display:flex; gap:4px; margin-top:12px; list-style:none; padding:0}
+  .pips li{flex:1 1 0; height:5px; border-radius:99px; background:var(--line)}
+  .pips li.hit{background:var(--ok)}
+  .pips li.miss{background:var(--fire); opacity:.4}
+  .pips li.now{background:var(--fire)}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:18px;
+    padding:20px 18px; margin-top:18px; box-shadow:var(--shadow);
+  }
+  .q{margin:0; font-size:19px; font-weight:700; line-height:1.5; text-wrap:pretty}
+
+  .choices{display:grid; gap:9px; margin-top:18px}
+  @media (min-width:600px){ .choices{grid-template-columns:1fr 1fr} }
+  .choice{
+    font-family:inherit; font-size:16px; font-weight:700; line-height:1.4; color:var(--ink);
+    background:var(--surface-2); border:2px solid transparent; border-radius:13px;
+    padding:15px 14px; min-height:62px; cursor:pointer; text-align:center;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .choice:hover{border-color:var(--line-2)}
+  .choice[disabled]{cursor:default}
+  .choice.correct{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)}
+  .choice.wrong{background:var(--fire-soft); border-color:var(--fire); color:var(--fire-deep)}
+  /* 回答後は関係ない選択肢を畳んで、解説と「次へ」を画面内に収める */
+  .choice.folded{display:none}
+  .choices.done .choice{min-height:0; padding:11px 13px; font-size:15px}
+
+  .actionbar{
+    position:sticky; bottom:0; z-index:5; margin-top:16px;
+    padding-top:12px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    background:linear-gradient(to top, var(--paper) 70%, transparent);
+  }
+
+  .verdict{margin-top:18px; border-radius:14px; padding:16px 15px; border:1px solid var(--line)}
+  .verdict.yes{background:var(--ok-soft); border-color:var(--ok)}
+  .verdict.no{background:var(--fire-soft); border-color:var(--fire)}
+  .verdict h2{margin:0 0 8px; font-size:16px; font-weight:900; letter-spacing:.05em}
+  .verdict.yes h2{color:var(--ok)}
+  .verdict.no h2{color:var(--fire-deep)}
+  .ans{font-size:15px; font-weight:800; color:var(--fire-deep); margin:0 0 8px}
+  .exp{margin:0; font-size:15px; line-height:1.7; color:var(--ink)}
+  .note{
+    display:block; margin-top:12px; padding:10px 12px; border-radius:10px;
+    background:var(--warn-bg); border-left:4px solid var(--warn-line);
+    color:var(--warn-ink); font-size:14px; line-height:1.6; text-align:left;
+  }
+
+  /* ---------- result ---------- */
+  .score{
+    text-align:center; background:var(--surface); border:1px solid var(--line);
+    border-radius:18px; padding:26px 18px; margin-top:18px; box-shadow:var(--shadow);
+  }
+  .score .big{font-family:var(--mono); font-weight:700; font-size:64px; line-height:1; color:var(--fire); font-variant-numeric:tabular-nums}
+  .score .of{font-size:15px; color:var(--ink-3); margin-top:6px}
+  .score .rank{margin:16px 0 0; font-size:17px; font-weight:800; line-height:1.5; text-wrap:balance}
+
+  .sharebox{margin-top:12px}
+  .sharebox textarea{
+    width:100%; min-height:104px; font-family:inherit; font-size:14px; line-height:1.6;
+    padding:12px; border-radius:12px; border:1px solid var(--line-2);
+    background:var(--surface); color:var(--ink); resize:vertical;
+  }
+  .hint{font-size:13px; color:var(--ink-3); margin:6px 0 0}
+
+  .follow{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:22px; padding:14px; border-radius:14px;
+    border:1px dashed var(--line-2); background:var(--surface);
+    font-size:14px; color:var(--ink-2); text-align:center;
+  }
+  .follow a{color:var(--fire); font-weight:800; text-decoration:none}
+  .follow a:hover{text-decoration:underline}
+
+  footer{
+    margin-top:28px; padding-top:16px; border-top:1px solid var(--line);
+    font-size:12px; line-height:1.7; color:var(--ink-3);
+  }
+  footer strong{color:var(--ink-2); font-weight:700}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== スタート ===== -->
+  <section id="screen-start">
+    <p class="eyebrow">大阪府 吹田市消防団</p>
+    <h1>救急救命<br><span class="accent">スピードクイズ</span></h1>
+    <p class="lede">いざというときに動けるかどうかは、知っているかどうかで決まります。まずは10問、やってみてください。</p>
+
+    <ul class="facts">
+      <li><b>10</b><span>もんだい</span></li>
+      <li><b>30</b><span>びょう / 問</span></li>
+      <li><b>3</b><span>分ぐらい</span></li>
+    </ul>
+
+    <div class="btn-row">
+      <button class="btn" id="start-btn" type="button">スタート！</button>
+    </div>
+
+    <footer>
+      作成：吹田市消防団　／　参考：総務省消防庁「応急手当の手引き」、日本蘇生協議会（JRC）蘇生ガイドライン<br>
+      <strong>このクイズは家庭での学習用です。</strong>実際の急病やけがのときは、ためらわず119番通報してください。
+    </footer>
+  </section>
+
+  <!-- ===== 出題 ===== -->
+  <section id="screen-quiz" hidden>
+    <div class="hud">
+      <span class="counter" id="counter">Q 1 / 10</span>
+      <span class="clock" id="clock">30<small>秒</small></span>
+    </div>
+    <div class="meter"><i id="meter-fill"></i></div>
+    <ul class="pips" id="pips"></ul>
+
+    <div class="card">
+      <p class="q" id="question"></p>
+      <div class="choices" id="choices"></div>
+
+      <div class="verdict" id="verdict" hidden>
+        <h2 id="verdict-head"></h2>
+        <p class="ans" id="verdict-ans" hidden></p>
+        <p class="exp" id="verdict-exp"></p>
+      </div>
+    </div>
+
+    <div class="actionbar" id="actionbar" hidden>
+      <button class="btn" id="next-btn" type="button">次へすすむ</button>
+    </div>
+  </section>
+
+  <!-- ===== 結果 ===== -->
+  <section id="screen-result" hidden>
+    <p class="eyebrow">けっか</p>
+    <h1>クイズ終了！</h1>
+
+    <div class="score">
+      <div class="big" id="final-score">0</div>
+      <div class="of">10問中 <span id="final-score-2">0</span> 問正解</div>
+      <p class="rank" id="rank"></p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn share" id="share-btn" type="button">結果をシェアする</button>
+      <div class="sharebox" id="sharebox" hidden>
+        <textarea id="share-text" readonly></textarea>
+        <p class="hint">この文章を長押ししてコピーし、ストーリーズや LINE に貼り付けてください。</p>
+      </div>
+      <button class="btn secondary" id="restart-btn" type="button">最初からやり直す</button>
+    </div>
+
+    <p class="follow">訓練や大会のようすは Instagram で発信しています　<a href="https://www.instagram.com/suitasyobodan119_osaka" target="_blank" rel="noopener">@suitasyobodan119_osaka</a></p>
+
+    <footer>
+      作成：吹田市消防団　／　参考：総務省消防庁「応急手当の手引き」、日本蘇生協議会（JRC）蘇生ガイドライン<br>
+      <strong>このクイズは家庭での学習用です。</strong>実際の急病やけがのときは、ためらわず119番通報してください。
+    </footer>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TIME_LIMIT = 30;
+
+  var questions = [
+    { q:'倒れている人の胸を押す「<ruby>胸骨圧迫<rt>きょうこつあっぱく</rt></ruby>」。どのくらいの早さで押すのが正解？',
+      choices:['1分間に約100〜120回','1分間に約50回','1秒に3回','ゆっくり自分のペースで'],
+      answer:'1分間に約100〜120回',
+      explanation:'「アンパンマンのマーチ」や「パプリカ」の曲のテンポと同じくらい、1分間に100〜120回の早さで絶え間なく押すのがポイントだよ。' },
+
+    { q:'やけどをしてしまったとき、一番最初にすることはどれ？',
+      choices:['すぐにきれいな水で冷やす','お湯で洗う','バンドエイドをはる','何もせずそのままにする'],
+      answer:'すぐにきれいな水で冷やす',
+      explanation:'やけどをしたら、すぐに水道の流れる水で15分以上しっかり冷やすことが一番大切だよ。<span class="note">ただし、やけどが広い<ruby>範囲<rt>はんい</rt></ruby>のときは、冷やしすぎると体が冷えて危険なんだ。まわりの大人に知らせて、すぐに119番通報しよう。</span>' },
+
+    { q:'鼻血が出たときの正しい止め方はどれ？',
+      choices:['下を向いて小鼻をしっかりつまむ','上を向いて首をトントンたたく','ティッシュをたくさん詰める','<ruby>仰向<rt>あおむ</rt></ruby>けに寝ころがる'],
+      answer:'下を向いて小鼻をしっかりつまむ',
+      explanation:'上を向くと血を飲み込んで気持ち悪くなっちゃうんだ。少し下を向いて、鼻のやわらかい部分（小鼻）をしっかりつまむのが正しい止め方だよ。' },
+
+    { q:'AEDを使うとき、倒れている人の体が水や汗で濡れていたらどうする？',
+      choices:['タオルなどで胸の水分をふき取る','そのままAEDのシールを貼る','ドライヤーで乾かす','濡れている時は使わない'],
+      answer:'タオルなどで胸の水分をふき取る',
+      explanation:'体が濡れたままだと電気がうまく伝わらないんだ。AEDに入っているタオルなどで胸の水分をふき取ってからパッド（シール）を貼ろう！' },
+
+    { q:'倒れている人を見つけたら、まずはどうやって<ruby>意識<rt>いしき</rt></ruby>があるか確かめる？',
+      choices:['肩をたたきながら声をかける','ほっぺたを強くつねる','顔に水をかける','大声で耳元で叫ぶ'],
+      answer:'肩をたたきながら声をかける',
+      explanation:'まずは「大丈夫ですか？」と声をかけながら、両肩をトントンとたたいて反応があるか確かめよう。' },
+
+    { q:'熱中症を防ぐために、こまめに取るといいものは「水分」とあと一つは何？',
+      choices:['塩分（えんぶん）','糖分（とうぶん）','脂肪分（しぼうぶん）','鉄分（てつぶん）'],
+      answer:'塩分（えんぶん）',
+      explanation:'汗をかくと水分と一緒に塩分も体から出ていってしまうんだ。お水と一緒に塩あめなどをなめて、塩分もしっかり補給しよう！' },
+
+    { q:'ごはんやおもちゃが喉に詰まって息ができなくなった人を見つけたら、背中のどこをたたく？',
+      choices:['<ruby>肩甲骨<rt>けんこうこつ</rt></ruby>（背中の羽みたいな骨）の間','腰のあたり','首のうしろ','おしり'],
+      answer:'<ruby>肩甲骨<rt>けんこうこつ</rt></ruby>（背中の羽みたいな骨）の間',
+      explanation:'肩甲骨と肩甲骨の間を、手のひらの付け根で力強く何度もたたいて（<ruby>背部叩打法<rt>はいぶこうだほう</rt></ruby>）、詰まったものを吐き出させよう。<span class="note">1<ruby>歳<rt>さい</rt></ruby>より小さい赤ちゃんは、うでの上でうつぶせにして頭を低くしてから背中をたたくなど、やり方がちがうよ。まずは大人を呼んで119番通報しよう。</span>' },
+
+    { q:'AEDの電源を入れると、機械はどうなるかな？',
+      choices:['音声でやり方を教えてくれる','音楽が流れるだけ','警察に自動で電話がつながる','自分で説明書を読まないといけない'],
+      answer:'音声でやり方を教えてくれる',
+      explanation:'AEDは電源を入れると「パッドを胸に貼ってください」など、音声でやり方を全部教えてくれるから、小学生でも落ち着いて使えるんだよ。' },
+
+    { q:'救急車を呼んで待っている間、もしあれば準備しておくといいものはどれ？',
+      choices:['飲んでいるお薬や「お薬手帳」','好きなお菓子','着替えのパジャマ','暇つぶしのゲーム'],
+      answer:'飲んでいるお薬や「お薬手帳」',
+      explanation:'いつも飲んでいる薬や「お薬手帳」があると、救急隊や病院の先生が正しい治療をすぐに始められるからとっても助かるんだ。' },
+
+    { q:'119番に電話をすると、消防署の人から最初に聞かれることは何かな？',
+      choices:['「火事ですか？救急ですか？」','「あなたの名前は何ですか？」','「今は何時ですか？」','「お腹は痛いですか？」'],
+      answer:'「火事ですか？救急ですか？」',
+      explanation:'まずは消防車と救急車のどちらが必要かを確認するために「火事ですか？救急ですか？」と聞かれるよ。落ち着いて「救急です」と答えよう！' }
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var screenStart = $('screen-start'), screenQuiz = $('screen-quiz'), screenResult = $('screen-result');
+  var counterEl = $('counter'), clockEl = $('clock'), meterEl = $('meter-fill'), pipsEl = $('pips');
+  var questionEl = $('question'), choicesEl = $('choices');
+  var verdictEl = $('verdict'), verdictHead = $('verdict-head'), verdictAns = $('verdict-ans'), verdictExp = $('verdict-exp');
+  var nextBtn = $('next-btn'), actionBar = $('actionbar');
+  var shareBtn = $('share-btn'), shareBox = $('sharebox'), shareText = $('share-text'), restartBtn = $('restart-btn');
+
+  var index = 0, score = 0, answered = false, timer = null, timeLeft = TIME_LIMIT;
+  var marks = [];
+
+  function quizUrl(){
+    return (location.origin + location.pathname).replace(/\/$/, '');
+  }
+
+  function shuffle(a){
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function buildPips(){
+    pipsEl.innerHTML = '';
+    for (var i = 0; i < questions.length; i++){
+      pipsEl.appendChild(document.createElement('li'));
+    }
+  }
+  function paintPips(){
+    var items = pipsEl.children;
+    for (var i = 0; i < items.length; i++){
+      items[i].className = marks[i] === true ? 'hit' : marks[i] === false ? 'miss' : (i === index ? 'now' : '');
+    }
+  }
+
+  function setClock(){
+    clockEl.innerHTML = timeLeft + '<small>秒</small>';
+    clockEl.classList.toggle('low', timeLeft <= 10);
+    meterEl.style.transform = 'scaleX(' + Math.max(0, timeLeft / TIME_LIMIT) + ')';
+  }
+
+  function startTimer(){
+    clearInterval(timer);
+    timeLeft = TIME_LIMIT;
+    clockEl.classList.remove('stopped');
+    meterEl.parentNode.classList.remove('stopped');
+    setClock();
+    timer = setInterval(function(){
+      timeLeft--;
+      if (timeLeft <= 0){
+        timeLeft = 0;
+        setClock();
+        clearInterval(timer);
+        clockEl.innerHTML = '時間切れ';
+        resolve(null, null);
+        return;
+      }
+      setClock();
+    }, 1000);
+  }
+
+  function showQuestion(){
+    answered = false;
+    var q = questions[index];
+
+    counterEl.textContent = 'Q ' + (index + 1) + ' / ' + questions.length;
+    questionEl.innerHTML = q.q;
+    verdictEl.hidden = true;
+    verdictAns.hidden = true;
+    actionBar.hidden = true;
+    choicesEl.hidden = false;
+    choicesEl.className = 'choices';
+    choicesEl.innerHTML = '';
+    paintPips();
+
+    shuffle(q.choices.slice()).forEach(function(choice){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'choice';
+      b.innerHTML = choice;
+      b.addEventListener('click', function(){ resolve(choice, b); });
+      choicesEl.appendChild(b);
+    });
+
+    startTimer();
+  }
+
+  function resolve(choice, btn){
+    if (answered) return;
+    answered = true;
+    clearInterval(timer);
+
+    var q = questions[index];
+    var right = choice !== null && choice === q.answer;
+    if (right) score++;
+    marks[index] = right;
+
+    clockEl.classList.add('stopped');
+    meterEl.parentNode.classList.add('stopped');
+    choicesEl.className = 'choices done';
+    var buttons = choicesEl.querySelectorAll('.choice');
+    for (var i = 0; i < buttons.length; i++){
+      var el = buttons[i];
+      el.disabled = true;
+      if (el.innerHTML === q.answer) el.classList.add('correct');
+      else if (el === btn) el.classList.add('wrong');
+      else el.classList.add('folded');
+    }
+
+    verdictEl.hidden = false;
+    verdictEl.className = 'verdict ' + (right ? 'yes' : 'no');
+    verdictHead.textContent = right ? '〇　正解！' : (choice === null ? '×　時間切れ' : '×　残念…');
+    if (!right){
+      verdictAns.hidden = false;
+      verdictAns.innerHTML = '正解は「' + q.answer + '」';
+    }
+    verdictExp.innerHTML = q.explanation;
+
+    actionBar.hidden = false;
+    nextBtn.textContent = (index === questions.length - 1) ? '結果を見る' : '次へすすむ';
+    paintPips();
+    setTimeout(function(){
+      try { verdictEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+    }, 30);
+  }
+
+  function rankFor(s){
+    if (s === 10) return 'パーフェクト！消防団員レベルです。';
+    if (s >= 8) return 'すばらしい！いざというとき、きっと動けます。';
+    if (s >= 5) return 'あと一歩！まちがえた問題をもう一度見直そう。';
+    return 'ここからが本番。もう一度チャレンジしてみよう！';
+  }
+
+  function showResult(){
+    screenQuiz.hidden = true;
+    screenResult.hidden = false;
+    $('final-score').textContent = score;
+    $('final-score-2').textContent = score;
+    $('rank').textContent = rankFor(score);
+    shareBox.hidden = true;
+    shareBtn.textContent = '結果をシェアする';
+    window.scrollTo(0, 0);
+  }
+
+  function shareMessage(){
+    return '吹田市消防団の「救急救命スピードクイズ」に挑戦！\n'
+      + questions.length + '問中' + score + '問正解でした。\n'
+      + rankFor(score) + '\n\nあなたは何問わかる？\n'
+      + quizUrl();
+  }
+
+  $('start-btn').addEventListener('click', function(){
+    index = 0; score = 0; marks = [];
+    buildPips();
+    screenStart.hidden = true;
+    screenResult.hidden = true;
+    screenQuiz.hidden = false;
+    window.scrollTo(0, 0);
+    showQuestion();
+  });
+
+  nextBtn.addEventListener('click', function(){
+    index++;
+    if (index < questions.length){
+      window.scrollTo(0, 0);
+      showQuestion();
+    } else {
+      showResult();
+    }
+  });
+
+  restartBtn.addEventListener('click', function(){
+    screenResult.hidden = true;
+    screenStart.hidden = false;
+    window.scrollTo(0, 0);
+  });
+
+  shareBtn.addEventListener('click', function(){
+    var text = shareMessage();
+
+    if (navigator.share){
+      navigator.share({ title: '吹田市消防団 救急救命スピードクイズ', text: text })
+        .catch(function(err){
+          if (err && err.name === 'AbortError') return;
+          fallbackShare(text);
+        });
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        shareBtn.textContent = 'コピーしました！';
+        setTimeout(function(){ shareBtn.textContent = '結果をシェアする'; }, 2500);
+      }).catch(function(){ fallbackShare(text); });
+      return;
+    }
+    fallbackShare(text);
+  });
+
+  function fallbackShare(text){
+    shareText.value = text;
+    shareBox.hidden = false;
+    shareBtn.textContent = '下の文章をコピーしてね';
+    shareText.focus();
+    shareText.select();
+  }
+
+  buildPips();
+})();
+</script>
+</body>
+</html>
