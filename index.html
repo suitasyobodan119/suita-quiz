@@ -211,6 +211,13 @@
     *{transition:none !important; animation:none !important}
   }
 </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-117LNT3E63"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-117LNT3E63');
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -365,6 +372,11 @@
     return (location.origin + location.pathname).replace(/\/$/, '');
   }
 
+  // Googleアナリティクスが読み込まれていれば送る。無ければ何もしない。
+  function track(name, params){
+    try { if (typeof window.gtag === 'function') window.gtag('event', name, params || {}); } catch (e) {}
+  }
+
   function shuffle(a){
     for (var i = a.length - 1; i > 0; i--){
       var j = Math.floor(Math.random() * (i + 1));
@@ -493,6 +505,7 @@
     shareBox.hidden = true;
     shareBtn.textContent = '結果をシェアする';
     window.scrollTo(0, 0);
+    track('quiz_complete', { score: score, total: questions.length });
   }
 
   function shareMessage(){
@@ -509,6 +522,7 @@
     screenResult.hidden = true;
     screenQuiz.hidden = false;
     window.scrollTo(0, 0);
+    track('quiz_start');
     showQuestion();
   });
 
@@ -530,6 +544,7 @@
 
   shareBtn.addEventListener('click', function(){
     var text = shareMessage();
+    track('quiz_share', { score: score });
 
     if (navigator.share){
       navigator.share({ title: '吹田市消防団 救急救命スピードクイズ', text: text })
