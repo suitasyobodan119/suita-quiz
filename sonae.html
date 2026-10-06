@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吹田市消防団 備え編（地震）スピードクイズ！</title>
+    <!-- Googleアナリティクスを使う場合は、救急救命編と同じ gtag スニペットをここに貼る -->
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; background-color: #fdf2f2; color: #333; display: flex; justify-content: center; align-items: flex-start; height: 100vh; margin: 0; padding: 5px; box-sizing: border-box; overflow: hidden; }
+
+        #quiz-container { background-color: #fff; padding: 15px 10px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 700px; text-align: center; border: 4px solid #ff4d4d; position: relative; box-sizing: border-box; margin: 0 auto; transform-origin: top center; }
+
+        h1 { color: #ff1a1a; font-size: 1.4em; margin-top: 5px; margin-bottom: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); line-height: 1.2; }
+        #timer-display { font-size: 1.8em; color: #ff1a1a; font-weight: bold; margin-bottom: 5px; }
+        #question { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; line-height: 1.3; min-height: 50px; }
+
+        ruby { ruby-align: center; }
+        rt { font-size: 0.6em; color: #555; }
+
+        #choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 5px; }
+        .choice-btn { background-color: #f0f0f0; border: 2px solid #ccc; color: #333; padding: 5px; font-size: 0.95em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-align: center; line-height: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60px; }
+        .choice-btn:focus-visible, button:focus-visible { outline: 3px solid #0066cc; outline-offset: 2px; }
+
+        #feedback { margin-top: 5px; font-size: 1em; padding: 10px; border-radius: 8px; display: none; }
+        #feedback.correct { background-color: #e6ffea; border: 2px solid #00cc00; color: #006600; }
+        #feedback.incorrect { background-color: #fff5f5; border: 2px solid #ff1a1a; color: #990000; }
+        #feedback-icon { font-size: 1.5em; margin-bottom: 2px; }
+        #explanation { font-size: 0.95em; color: #333; margin-top: 5px; line-height: 1.4; text-align: left; }
+        .note { display: block; margin-top: 6px; padding: 6px 8px; background-color: #fffbe6; border-left: 4px solid #ffb300; font-size: 0.9em; color: #5a4500; line-height: 1.4; }
+
+        #next-btn, #restart-btn, #start-btn, #share-btn { border: none; color: white; padding: 10px 20px; font-size: 1.2em; border-radius: 50px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; background-color: #ff4d4d; }
+        #start-btn { background-color: #ff1a1a; font-size: 1.4em; padding: 14px 20px; }
+        #share-btn { background-color: #1a8f3c; }
+        #restart-btn { background-color: #888; font-size: 1em; padding: 8px 20px; }
+        #next-btn, #restart-btn { display: none; }
+
+        #result { display: none; font-size: 1.2em; margin-top: 10px; }
+        #score { font-size: 1.8em; color: #ff1a1a; font-weight: bold; }
+        #rank-comment { font-size: 1.1em; font-weight: bold; color: #ff1a1a; margin-top: 8px; line-height: 1.4; }
+        #question-counter { position: absolute; top: 10px; left: 10px; font-size: 0.9em; font-weight: bold; color: #666; }
+
+        #share-fallback { display: none; margin-top: 10px; }
+        #share-text { width: 100%; height: 90px; font-size: 0.85em; padding: 8px; border: 2px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: inherit; line-height: 1.4; }
+        #share-hint { font-size: 0.85em; color: #666; margin-top: 4px; }
+
+        #cta { display: none; margin-top: 10px; padding: 10px; background-color: #fff5f5; border: 2px dashed #ff4d4d; border-radius: 8px; font-size: 0.95em; line-height: 1.5; text-align: left; }
+        #cta strong { color: #ff1a1a; }
+
+        footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #eee; font-size: 0.7em; color: #888; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="start-screen">
+        <h1 id="main-title">吹田市消防団<br>備え編（地震）スピードクイズ！</h1>
+        <p style="font-size: 1em; color: #666;">制限時間は1問につき<strong>30秒</strong>！</p>
+        <button id="start-btn">スタート！</button>
+    </div>
+
+    <div id="quiz-screen" style="display:none;">
+        <div id="question-counter"></div>
+        <div id="timer-display">30</div>
+        <div id="question"></div>
+        <div id="choices"></div>
+        <div id="feedback">
+            <div id="feedback-icon"></div>
+            <div id="explanation"></div>
+        </div>
+        <button id="next-btn">次へすすむ</button>
+    </div>
+
+    <div id="result-screen" style="display:none;">
+        <h1>クイズ終了！</h1>
+        <div id="result">
+            <p>全<span id="total-questions-display"></span>問中、</p>
+            <p id="score-text"><span id="score">0</span> 問正解！</p>
+            <p id="rank-comment"></p>
+        </div>
+        <div id="cta"></div>
+        <button id="share-btn">結果をシェアする</button>
+        <div id="share-fallback">
+            <textarea id="share-text" readonly></textarea>
+            <p id="share-hint">この文章を長押ししてコピーし、ストーリーズや LINE に貼り付けてください。</p>
+        </div>
+        <button id="restart-btn">最初からやり直す</button>
+    </div>
+
+    <footer>作成：吹田市消防団　／　参考：総務省消防庁「防災マニュアル」、内閣府「防災情報のページ」、吹田市 防災・危機管理情報<br>このクイズは家庭での学習用です。実際の地震のときは、まず身の安全を確保し、吹田市の防災情報に従ってください。</footer>
+</div>
+
+<script>
+    const QUIZ_NAME = '備え編（地震）スピードクイズ！';
+    const QUIZ_URL = 'https://suitasyobodan119.github.io/suita-quiz/sonae.html';
+    const SHARE_TAIL = 'あなたのおうちは大丈夫？';
+
+    // Googleアナリティクス（gtag）が読み込まれていればイベントを送る。無ければ何もしない
+    function track(eventName, params) {
+        if (typeof gtag === 'function') { gtag('event', eventName, params || {}); }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    const questions = [
+        {
+                "q": "グラッと<ruby>揺<rt>ゆ</rt></ruby>れを感じたら、おうちの中でまずどうする？",
+                "choices": [
+                        "<ruby>机<rt>つくえ</rt></ruby>の下にかくれる",
+                        "外に走って<ruby>逃<rt>に</rt></ruby>げる",
+                        "テレビをつける",
+                        "大声で<ruby>叫<rt>さけ</rt></ruby>ぶ"
+                ],
+                "answer": "<ruby>机<rt>つくえ</rt></ruby>の下にかくれる",
+                "explanation": "正解！まずは自分の頭と体を守ることが一番大事だよ。<ruby>揺<rt>ゆ</rt></ruby>れがおさまるまで、机の下でダンゴムシのように丸まろう！"
+        },
+        {
+                "q": "家から<ruby>逃<rt>に</rt></ruby>げるとき、<ruby>火事<rt>かじ</rt></ruby>を<ruby>防<rt>ふせ</rt></ruby>ぐために切っていくものは？",
+                "choices": [
+                        "ブレーカー",
+                        "テレビのスイッチ",
+                        "<ruby>水道<rt>すいどう</rt></ruby>の<ruby>栓<rt>せん</rt></ruby>",
+                        "<ruby>冷蔵庫<rt>れいぞうこ</rt></ruby>の<ruby>電源<rt>でんげん</rt></ruby>"
+                ],
+                "answer": "ブレーカー",
+                "explanation": "正解！電気が<ruby>復旧<rt>ふっきゅう</rt></ruby>したときに起きる「<ruby>通電火災<rt>つうでんかさい</rt></ruby>」を防ぐため、ブレーカーを落としてから逃げよう。<span class=\"note\">順番が大事。揺れている最中は身を守ることが最優先。揺れがおさまって「家を出る」と決めたときに落とすよ。揺れを感じて自動で電気を止める「感震ブレーカー」をつけておくともっと安心。</span>"
+        },
+        {
+                "q": "<ruby>地震<rt>じしん</rt></ruby>のとき、外を歩いていて<ruby>危<rt>あぶ</rt></ruby>ないのはどこ？",
+                "choices": [
+                        "ブロック<ruby>塀<rt>べい</rt></ruby>の近く",
+                        "広い公園",
+                        "大きな<ruby>駐車場<rt>ちゅうしゃじょう</rt></ruby>",
+                        "学校のグラウンド"
+                ],
+                "answer": "ブロック<ruby>塀<rt>べい</rt></ruby>の近く",
+                "explanation": "正解！ブロック塀や<ruby>自動販売機<rt>じどうはんばいき</rt></ruby>は、揺れで倒れてくるかもしれないから、絶対に近づかないでね。"
+        },
+        {
+                "q": "家族との<ruby>連絡<rt>れんらく</rt></ruby>に使う「<ruby>災害用伝言<rt>さいがいようでんごん</rt></ruby>ダイヤル」の番号は？",
+                "choices": [
+                        "171",
+                        "119",
+                        "110",
+                        "104"
+                ],
+                "answer": "171",
+                "explanation": "正解！「イナイ（171）からかける伝言ダイヤル」と覚えてね。電話がつながりにくい時でも、家族に無事を伝えられるよ。毎月1日と15日は体験利用ができるから、家族で一度試しておこう。"
+        },
+        {
+                "q": "おうちで<ruby>備蓄<rt>びちく</rt></ruby>しておくお水。1人1日あたりどれくらい必要？",
+                "choices": [
+                        "約3リットル",
+                        "約1リットル",
+                        "約500ミリリットル",
+                        "約10リットル"
+                ],
+                "answer": "約3リットル",
+                "explanation": "正解！飲み水や料理に使う分も合わせて、1人1日3リットル。「最低3日分、できれば1週間分」が目安だよ。4人家族なら3日分で36リットル、2リットルのペットボトル18本になるね。"
+        },
+        {
+                "q": "食べ物を備える「ローリングストック」ってどんな方法？",
+                "choices": [
+                        "<ruby>普段<rt>ふだん</rt></ruby>から食べて、食べた分を買い足す",
+                        "<ruby>賞味期限<rt>しょうみきげん</rt></ruby>まで絶対に食べない",
+                        "庭に<ruby>埋<rt>う</rt></ruby>めておく",
+                        "<ruby>缶詰<rt>かんづめ</rt></ruby>しか買わない"
+                ],
+                "answer": "<ruby>普段<rt>ふだん</rt></ruby>から食べて、食べた分を買い足す",
+                "explanation": "正解！いつも食べているレトルト食品やお菓子を少し多めに買い、古いものから食べて買い足すことで、常に新しい食料を備えられるよ。"
+        },
+        {
+                "q": "もしも<ruby>瓦礫<rt>がれき</rt></ruby>に<ruby>閉<rt>と</rt></ruby>じ<ruby>込<rt>こ</rt></ruby>められたら、助けを呼ぶのに一番いいアイテムは？",
+                "choices": [
+                        "ホイッスル（笛）",
+                        "大声で叫び続ける",
+                        "スマホのライト",
+                        "<ruby>拍手<rt>はくしゅ</rt></ruby>をする"
+                ],
+                "answer": "ホイッスル（笛）",
+                "explanation": "正解！大声を出し続けると体力を<ruby>消耗<rt>しょうもう</rt></ruby>しちゃうんだ。少しの息で遠くまで音が届くホイッスルをカバンにつけておこう。笛がなければ、近くの壁やパイプを硬いもので叩くのも有効だよ。"
+        },
+        {
+                "q": "<ruby>寝<rt>ね</rt></ruby>ている部屋に、置かないほうがいいものはどれ？",
+                "choices": [
+                        "<ruby>背<rt>せ</rt></ruby>の高い家具",
+                        "目覚まし時計",
+                        "<ruby>懐中電灯<rt>かいちゅうでんとう</rt></ruby>",
+                        "スリッパ"
+                ],
+                "answer": "<ruby>背<rt>せ</rt></ruby>の高い家具",
+                "explanation": "正解！寝ているときに本棚やタンスが倒れてくると逃げられなくなるよ。寝室にはなるべく大きな家具を置かず、どうしても置くなら突っ張り棒などで固定しよう。枕元にはスリッパと懐中電灯を！"
+        },
+        {
+                "q": "<ruby>災害<rt>さいがい</rt></ruby>のとき、水が止まってトイレが使えなくなるかも。何を準備する？",
+                "choices": [
+                        "<ruby>携帯<rt>けいたい</rt></ruby>・<ruby>簡易<rt>かんい</rt></ruby>トイレ",
+                        "新聞紙",
+                        "たくさんのトイレットペーパー",
+                        "大きなバケツ"
+                ],
+                "answer": "<ruby>携帯<rt>けいたい</rt></ruby>・<ruby>簡易<rt>かんい</rt></ruby>トイレ",
+                "explanation": "正解！トイレに流せなくなるとあっという間に困ってしまうよ。便器にかぶせて使える簡易トイレを、1人1日5回×家族の人数×最低3日分を目安に用意しておこう。"
+        },
+        {
+                "q": "<ruby>非常持<rt>ひじょうも</rt></ruby>ち<ruby>出<rt>だ</rt></ruby>し<ruby>袋<rt>ぶくろ</rt></ruby>の重さは、どれくらいがいい？",
+                "choices": [
+                        "自分が無理なく走れる重さ",
+                        "30キログラム",
+                        "持てるだけ全部",
+                        "100グラム"
+                ],
+                "answer": "自分が無理なく走れる重さ",
+                "explanation": "正解！いくら荷物を詰めても、重すぎて逃げ遅れたら意味がないよ。背負ったまま走って逃げられる重さにしておこう！"
+        }
+];
+
+    const RANKS = [
+        {
+                "min": 10,
+                "text": "パーフェクト！防災マスターです。家族にも教えてあげよう。"
+        },
+        {
+                "min": 8,
+                "text": "すばらしい！おうちの備え、ほぼバッチリです。"
+        },
+        {
+                "min": 5,
+                "text": "あと一歩！まちがえた問題は今夜、家族と確認しよう。"
+        },
+        {
+                "min": 0,
+                "text": "ここからが本番。今日できる備えをひとつ始めよう！"
+        }
+];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+    let timerInterval;
+    const TIME_LIMIT = 30;
+    let timeLeft = TIME_LIMIT;
+
+    document.getElementById('total-questions-display').innerText = questions.length;
+
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const questionCounterEl = document.getElementById('question-counter');
+    const timerDisplay = document.getElementById('timer-display');
+    const questionEl = document.getElementById('question');
+    const choicesEl = document.getElementById('choices');
+    const feedbackEl = document.getElementById('feedback');
+    const feedbackIconEl = document.getElementById('feedback-icon');
+    const explanationEl = document.getElementById('explanation');
+    const nextBtn = document.getElementById('next-btn');
+    const scoreEl = document.getElementById('score');
+    const rankCommentEl = document.getElementById('rank-comment');
+    const resultEl = document.getElementById('result');
+    const ctaEl = document.getElementById('cta');
+    const restartBtn = document.getElementById('restart-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const shareFallback = document.getElementById('share-fallback');
+    const shareTextEl = document.getElementById('share-text');
+
+    function adjustScale() {
+        const container = document.getElementById('quiz-container');
+        container.style.transform = 'none';
+        const availableHeight = window.innerHeight - 10;
+        const actualHeight = container.offsetHeight;
+        if (actualHeight > availableHeight && availableHeight > 0) {
+            container.style.transform = `scale(${availableHeight / actualHeight})`;
+        }
+    }
+    window.addEventListener('resize', adjustScale);
+
+    function getRankComment(s) {
+        for (const r of RANKS) { if (s >= r.min) return r.text; }
+        return RANKS[RANKS.length - 1].text;
+    }
+
+    function startTimer() {
+        timeLeft = TIME_LIMIT;
+        timerDisplay.innerText = timeLeft;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.innerText = "時間切れ！";
+                handleTimeOut();
+            }
+        }, 1000);
+    }
+
+    function handleTimeOut() {
+        if (hasAnswered) return;
+        hasAnswered = true;
+        choicesEl.style.display = 'none';
+        showFeedback(false, "時間切れ！<br>" + questions[currentQuestionIndex].explanation);
+        showNextButton();
+    }
+
+    function showQuestion() {
+        hasAnswered = false;
+        const currentQuestion = questions[currentQuestionIndex];
+        questionCounterEl.innerText = `Q ${currentQuestionIndex + 1} / ${questions.length}`;
+        questionEl.innerHTML = currentQuestion.q;
+        choicesEl.style.display = 'grid';
+        choicesEl.innerHTML = '';
+        feedbackEl.style.display = 'none';
+        feedbackEl.className = '';
+        nextBtn.style.display = 'none';
+
+        const shuffledChoices = [...currentQuestion.choices];
+        shuffleArray(shuffledChoices);
+        shuffledChoices.forEach((choice) => {
+            const button = document.createElement('button');
+            button.innerHTML = choice;
+            button.classList.add('choice-btn');
+            button.addEventListener('click', () => selectAnswer(choice));
+            choicesEl.appendChild(button);
+        });
+
+        startTimer();
+        setTimeout(adjustScale, 50);
+    }
+
+    function selectAnswer(choice) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+        clearInterval(timerInterval);
+        const currentQuestion = questions[currentQuestionIndex];
+        choicesEl.style.display = 'none';
+        if (choice === currentQuestion.answer) {
+            score++;
+            showFeedback(true, currentQuestion.explanation);
+        } else {
+            showFeedback(false, currentQuestion.explanation);
+        }
+        showNextButton();
+    }
+
+    function showNextButton() {
+        nextBtn.style.display = 'inline-block';
+        nextBtn.innerText = (currentQuestionIndex === questions.length - 1) ? '結果を見る' : '次へすすむ';
+        setTimeout(adjustScale, 50);
+    }
+
+    function showFeedback(isCorrect, explanation) {
+        feedbackEl.style.display = 'block';
+        feedbackEl.className = isCorrect ? 'correct' : 'incorrect';
+        feedbackIconEl.innerText = isCorrect ? '〇 正解！' : '× 残念...';
+        let correctText = "";
+        if (!isCorrect) {
+            correctText = `<div style="color: #ff1a1a; font-weight: bold; margin-bottom: 10px;">正解は「${questions[currentQuestionIndex].answer}」</div>`;
+        }
+        explanationEl.innerHTML = correctText + explanation;
+    }
+
+    function showResult() {
+        quizScreen.style.display = 'none';
+        resultScreen.style.display = 'block';
+        scoreEl.innerText = score;
+        rankCommentEl.innerText = getRankComment(score);
+        resultEl.style.display = 'block';
+        ctaEl.style.display = ctaEl.innerHTML.trim() ? 'block' : 'none';
+        restartBtn.style.display = 'inline-block';
+        shareBtn.style.display = 'block';
+        shareBtn.innerText = '結果をシェアする';
+        shareFallback.style.display = 'none';
+        track('quiz_complete', { quiz: QUIZ_NAME, score: score });
+        setTimeout(adjustScale, 50);
+    }
+
+    function buildShareText() {
+        return `吹田市消防団の「${QUIZ_NAME}」に挑戦！\n${questions.length}問中${score}問正解でした。\n${getRankComment(score)}\n\n${SHARE_TAIL}\n${QUIZ_URL}`;
+    }
+
+    function showShareFallback(text) {
+        shareTextEl.value = text;
+        shareFallback.style.display = 'block';
+        shareBtn.innerText = '下の文章をコピーしてね';
+        shareTextEl.focus();
+        shareTextEl.select();
+        setTimeout(adjustScale, 50);
+    }
+
+    shareBtn.addEventListener('click', async () => {
+        const text = buildShareText();
+        track('quiz_share', { quiz: QUIZ_NAME, score: score });
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: '吹田市消防団 ' + QUIZ_NAME, text: text });
+                return;
+            } catch (err) {
+                if (err && err.name === 'AbortError') return;
+            }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(text);
+                shareBtn.innerText = 'コピーしました！';
+                setTimeout(() => { shareBtn.innerText = '結果をシェアする'; }, 2500);
+                return;
+            } catch (err) {}
+        }
+        showShareFallback(text);
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        quizScreen.style.display = 'block';
+        track('quiz_start', { quiz: QUIZ_NAME });
+        showQuestion();
+    });
+
+    nextBtn.addEventListener('click', () => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) { showQuestion(); } else { showResult(); }
+    });
+
+    restartBtn.addEventListener('click', () => {
+        currentQuestionIndex = 0;
+        score = 0;
+        resultScreen.style.display = 'none';
+        startScreen.style.display = 'block';
+        nextBtn.innerText = '次へすすむ';
+        shareFallback.style.display = 'none';
+        setTimeout(adjustScale, 50);
+    });
+
+    window.onload = adjustScale;
+</script>
+
+</body>
+</html>
