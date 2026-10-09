@@ -635,5 +635,13 @@
   buildPips();
 })();
 </script>
+<script>
+  // Instagramへのリンクを押したら記録（どのクイズから押したか）
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href*="instagram.com"]');
+    if (!a) return;
+    try { if (typeof window.gtag === 'function') window.gtag('event', 'ig_click', { from: 'クイズ：' + document.title, transport_type: 'beacon' }); } catch (x) {}
+  }, true);
+</script>
 </body>
 </html>
