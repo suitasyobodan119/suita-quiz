@@ -216,7 +216,14 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag('js', new Date());
-  gtag('config', 'G-117LNT3E63');
+  // ?dan で開いた端末は「団員」として分けて集計（ゲームと共通）
+  var DAN = false;
+  try { var q = location.search;
+    if (/[?&]dan=0/.test(q)) localStorage.removeItem('suita119-member');
+    else if (/[?&]dan(=|&|$)/.test(q)) localStorage.setItem('suita119-member', '1');
+    DAN = localStorage.getItem('suita119-member') === '1'; } catch (e) {}
+  if (DAN) gtag('set', 'user_properties', { member: '団員' });
+  gtag('config', 'G-117LNT3E63', DAN ? { member: '団員' } : {});
 </script>
 </head>
 <body>
@@ -246,6 +253,7 @@
 
   <!-- ===== 出題 ===== -->
   <section id="screen-quiz" hidden>
+    <p class="eyebrow qtitle">吹田市消防団｜救急救命スピードクイズ</p>
     <div class="hud">
       <span class="counter" id="counter">Q 1 / 10</span>
       <span class="clock" id="clock">30<small>秒</small></span>
@@ -459,6 +467,7 @@
     var right = choice !== null && choice === q.answer;
     if (right) score++;
     marks[index] = right;
+    track('quiz_answer', { quiz: document.title, q: index + 1, ok: right });
 
     clockEl.classList.add('stopped');
     meterEl.parentNode.classList.add('stopped');
@@ -573,6 +582,9 @@
   }
 
   buildPips();
+
+  // 開いたらすぐ1問目から（スタート画面を見たいときは ?start=0）
+  if (!/[?&]start=0/.test(location.search)) $('start-btn').click();
 })();
 </script>
 <script>
